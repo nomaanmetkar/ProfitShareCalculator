@@ -378,7 +378,7 @@
     if (!weeksEl.value  || isNaN(weeks)  || weeks  <= 0) { weeksErr.style.display  = 'block'; valid = false; }
     if (!valid) return;
 
-    const bonus = (salary / 180) * 42 * weeks;
+    const bonus = (salary / 182) * 42 * weeks;
     const formatted = bonus.toLocaleString('en-AE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     document.getElementById('result-amount').textContent = `AED ${formatted}`;
