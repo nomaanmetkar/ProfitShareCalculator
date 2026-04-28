@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Profit Share Calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --red:       #C0152A;
+      --red-mid:   #E01E37;
+      --red-light: #FF4D63;
+      --bg:        #F8F8F8;
+      --card:      #FFFFFF;
+      --border:    rgba(192,21,42,0.15);
+      --text:      #1A0408;
+      --muted:     #8A5560;
+      --error:     #C0152A;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      background-image: radial-gradient(ellipse 70% 35% at 50% 0%, rgba(192,21,42,0.07) 0%, transparent 70%);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 620px;
+      padding: 48px 24px 24px;
+    }
+
+    .header { text-align: center; margin-bottom: 44px; }
+
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--red-mid);
+      font-weight: 500;
+      margin-bottom: 14px;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.1s;
+    }
+
+    .title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(36px, 7vw, 54px);
+      font-weight: 900;
+      line-height: 1.05;
+      color: var(--text);
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.2s;
+    }
+
+    .title span { color: var(--red); }
+
+    .divider {
+      width: 56px; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--red-mid), transparent);
+      margin: 18px auto 0;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.3s;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 44px 40px;
+      box-shadow: 0 4px 6px rgba(192,21,42,0.04), 0 20px 60px rgba(192,21,42,0.07);
+      opacity: 0;
+      animation: fadeUp 0.7s ease forwards 0.4s;
+    }
+
+    .field { margin-bottom: 30px; }
+
+    label {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--red);
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+
+    .input-wrap { position: relative; }
+
+    .currency-prefix, .weeks-suffix {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      transition: color 0.2s;
+      color: #C0778A;
+    }
+
+    .currency-prefix {
+      left: 20px;
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .weeks-suffix {
+      right: 20px;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+    }
+
+    input {
+      width: 100%;
+      background: #FFF8F8;
+      border: 1.5px solid rgba(192,21,42,0.2);
+      border-radius: 14px;
+      padding: 20px 20px 20px 86px;
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(26px, 5vw, 36px);
+      font-weight: 700;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+      -moz-appearance: textfield;
+    }
+
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    input::placeholder { color: rgba(192,21,42,0.2); }
+
+    input:focus {
+      border-color: var(--red-mid);
+      background: #FFF5F6;
+      box-shadow: 0 0 0 4px rgba(192,21,42,0.08), 0 4px 20px rgba(192,21,42,0.08);
+    }
+
+    .input-wrap:focus-within .currency-prefix,
+    .input-wrap:focus-within .weeks-suffix { color: var(--red); }
+
+    #weeks { padding-left: 20px; padding-right: 86px; }
+
+    .submit-btn {
+      width: 100%;
+      padding: 20px;
+      background: linear-gradient(135deg, var(--red) 0%, var(--red-mid) 50%, var(--red-light) 100%);
+      border: none;
+      border-radius: 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #fff;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 18px rgba(192,21,42,0.35);
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 36px rgba(192,21,42,0.45);
+    }
+
+    .submit-btn:active { transform: translateY(0); }
+
+    .error-msg {
+      color: var(--error);
+      font-size: 12px;
+      margin-top: 8px;
+      display: none;
+      letter-spacing: 0.05em;
+    }
+
+    /* Fireworks BEHIND everything */
+    #fireworks-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 200;
+    }
+
+    /* Result overlay ABOVE fireworks */
+    .result-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .result-overlay.show { display: flex; animation: fadeIn 0.35s ease; }
+
+    .result-card {
+      background: #FFFFFF;
+      border: 1.5px solid rgba(192,21,42,0.2);
+      border-radius: 28px;
+      padding: 52px 44px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 24px 80px rgba(192,21,42,0.18), 0 2px 8px rgba(0,0,0,0.06);
+      animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+    }
+
+    .result-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: 28px 28px 0 0;
+      background: linear-gradient(90deg, transparent, var(--red-mid), var(--red-light), var(--red-mid), transparent);
+    }
+
+    .result-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      display: block;
+      animation: bounceIn 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s both;
+    }
+
+    .result-label {
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .result-message {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(17px, 3vw, 21px);
+      font-weight: 700;
+      line-height: 1.55;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .result-amount {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(34px, 7vw, 50px);
+      font-weight: 900;
+      color: var(--red);
+      display: block;
+      margin: 4px 0 8px;
+    }
+
+    .result-date {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 36px;
+    }
+
+    .close-btn {
+      background: #FFF0F2;
+      border: 1.5px solid rgba(192,21,42,0.2);
+      border-radius: 10px;
+      padding: 14px 36px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--red);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .close-btn:hover { background: #FFE0E4; transform: translateY(-1px); }
+
+    .footer {
+      margin-top: 28px;
+      text-align: center;
+      font-style: italic;
+      font-size: 13px;
+      color: var(--muted);
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.9s;
+      padding-bottom: 24px;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes scaleIn {
+      from { transform: scale(0.82); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+    @keyframes bounceIn {
+      0%   { transform: scale(0);    opacity: 0; }
+      60%  { transform: scale(1.25); }
+      80%  { transform: scale(0.92); }
+      100% { transform: scale(1);    opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="fireworks-canvas"></canvas>
+
+<div class="container">
+  <div class="header">
+    <p class="eyebrow">2026 Profit Share</p>
+    <h1 class="title">Bonus <span>Calculator</span></h1>
+    <div class="divider"></div>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <label for="salary">Basic Salary</label>
+      <div class="input-wrap">
+        <span class="currency-prefix">AED</span>
+        <input type="number" id="salary" placeholder="0" min="0" />
+      </div>
+      <p class="error-msg" id="salary-err">Please enter a valid salary.</p>
+    </div>
+
+    <div class="field">
+      <label for="weeks">Bonus Weeks</label>
+      <div class="input-wrap">
+        <input type="number" id="weeks" placeholder="0" min="0" step="0.5" />
+        <span class="weeks-suffix">WEEKS</span>
+      </div>
+      <p class="error-msg" id="weeks-err">Please enter the number of bonus weeks.</p>
+    </div>
+
+    <button class="submit-btn" onclick="calculate()">Calculate My Bonus →</button>
+  </div>
+
+  <div class="footer">Powered by Nomaan</div>
+</div>
+
+<div class="result-overlay" id="result-overlay">
+  <div class="result-card">
+    <span class="result-icon">🎉</span>
+    <p class="result-label">Congratulations</p>
+    <p class="result-message">You will receive a profit share of</p>
+    <span class="result-amount" id="result-amount">AED 0</span>
+    <p class="result-date">on 26th May 2026</p>
+    <button class="close-btn" onclick="closeResult()">Calculate Again</button>
+  </div>
+</div>
+
+<script>
+  /* ── Calculator ── */
+  function calculate() {
+    const salaryEl  = document.getElementById('salary');
+    const weeksEl   = document.getElementById('weeks');
+    const salaryErr = document.getElementById('salary-err');
+    const weeksErr  = document.getElementById('weeks-err');
+
+    let valid = true;
+    const salary = parseFloat(salaryEl.value);
+    const weeks  = parseFloat(weeksEl.value);
+
+    salaryErr.style.display = 'none';
+    weeksErr.style.display  = 'none';
+
+    if (!salaryEl.value || isNaN(salary) || salary <= 0) { salaryErr.style.display = 'block'; valid = false; }
+    if (!weeksEl.value  || isNaN(weeks)  || weeks  <= 0) { weeksErr.style.display  = 'block'; valid = false; }
+    if (!valid) return;
+
+    const bonus = (salary / 180) * 42 * weeks;
+    const formatted = bonus.toLocaleString('en-AE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    document.getElementById('result-amount').textContent = `AED ${formatted}`;
+    document.getElementById('result-overlay').classList.add('show');
+    launchFireworks();
+  }
+
+  function closeResult() {
+    document.getElementById('result-overlay').classList.remove('show');
+    stopFireworks();
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') calculate(); });
+
+  /* ── Fireworks — minimal gold, edges only ── */
+  const canvas = document.getElementById('fireworks-canvas');
+  const ctx    = canvas.getContext('2d');
+  let particles = [], animId = null, launching = false, rocketInterval = null;
+
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const GOLD = ['#FFD700','#FFC200','#FFDF60','#FFECAA','#FFA500','#FFE066','#FFFFFF'];
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+  function goldPick() { return GOLD[Math.floor(Math.random() * GOLD.length)]; }
+
+  function spawnRocket() {
+    if (!launching) return;
+    // Only left or right edge — never the centre where the card sits
+    const side   = Math.random() < 0.5 ? 'left' : 'right';
+    const startX = side === 'left'
+      ? rnd(20, canvas.width * 0.18)
+      : rnd(canvas.width * 0.82, canvas.width - 20);
+    const endX = startX + rnd(-50, 50);
+    const endY = rnd(canvas.height * 0.06, canvas.height * 0.38);
+    const color = goldPick();
+    let x = startX, y = canvas.height;
+    const speed = rnd(16, 24);
+
+    function step() {
+      if (!launching) return;
+      particles.push({
+        x, y,
+        vx: rnd(-0.4, 0.4), vy: rnd(-0.4, 0.4),
+        life: rnd(6, 12), maxLife: 12,
+        color, size: rnd(1.5, 2.5), gravity: 0
+      });
+      const dx = endX - x, dy = endY - y, dist = Math.hypot(dx, dy);
+      if (dist < speed) { explode(endX, endY, color); return; }
+      x += dx / dist * speed;
+      y += dy / dist * speed;
+      requestAnimationFrame(step);
+    }
+    step();
+  }
+
+  function explode(cx, cy, baseColor) {
+    // 60 particles — noticeable but not overwhelming
+    const count = 60;
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 * i) / count + rnd(-0.08, 0.08);
+      const spd   = rnd(3, 7);
+      particles.push({
+        x: cx, y: cy,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        life: rnd(55, 90), maxLife: 90,
+        color: Math.random() < 0.2 ? goldPick() : baseColor,
+        size: rnd(2, 4.5), gravity: rnd(0.06, 0.11)
+      });
+    }
+    // Small sparkle crosses
+    for (let i = 0; i < 14; i++) {
+      particles.push({
+        x: cx, y: cy,
+        vx: rnd(-2.5, 2.5), vy: rnd(-5, -1),
+        life: rnd(45, 80), maxLife: 80,
+        color: Math.random() < 0.6 ? '#FFD700' : '#FFFFFF',
+        size: rnd(1.5, 2.5), gravity: rnd(0.02, 0.05),
+        sparkle: true
+      });
+    }
+  }
+
+  function drawLoop() {
+    // Full clear every frame — particles never bleed over the result card
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles = particles.filter(p => p.life > 0);
+
+    for (const p of particles) {
+      const alpha = Math.pow(p.life / p.maxLife, 0.65);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      if (p.sparkle) {
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth   = p.size * 0.9;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur  = 10;
+        ctx.lineCap     = 'round';
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y - p.size * 3);
+        ctx.lineTo(p.x, p.y + p.size * 3);
+        ctx.moveTo(p.x - p.size * 3, p.y);
+        ctx.lineTo(p.x + p.size * 3, p.y);
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle   = p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur  = 14;
+        ctx.fill();
+      }
+      ctx.restore();
+      p.x  += p.vx;
+      p.y  += p.vy;
+      p.vx *= 0.97;
+      if (p.gravity) p.vy += p.gravity;
+      p.life--;
+    }
+    animId = requestAnimationFrame(drawLoop);
+  }
+
+  function launchFireworks() {
+    launching = true;
+    particles = [];
+    if (animId) cancelAnimationFrame(animId);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawLoop();
+
+    // 4 rockets staggered over ~1.2 s
+    for (let i = 0; i < 4; i++) setTimeout(spawnRocket, i * 300);
+
+    // One more rocket every 3 s — ambient, not overwhelming
+    rocketInterval = setInterval(() => { if (launching) spawnRocket(); }, 3000);
+  }
+
+  function stopFireworks() {
+    launching = false;
+    clearInterval(rocketInterval);
+    setTimeout(() => {
+      cancelAnimationFrame(animId);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles = [];
+    }, 2000);
+  }
+</script>
+</body>
+</html>
